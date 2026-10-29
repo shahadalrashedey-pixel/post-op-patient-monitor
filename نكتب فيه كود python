@@ -1,0 +1,91 @@
+
+import streamlit as st
+from datetime import datetime, date
+
+st.set_page_config(
+    page_title="متابعة المريض بعد العملية",
+    page_icon="🩺",
+    layout="centered"
+)
+
+st.title("🩺 متابعة المريض بعد العملية")
+st.caption("نظام تجريبي للمتابعة الصحية عن بُعد")
+
+st.info("هذا نموذج تعليمي ببيانات وهمية، وليس للاستخدام الطبي الحقيقي.")
+
+st.header("👤 بيانات المريض")
+patient_name = st.text_input("اسم المريض التجريبي")
+patient_id = st.text_input("الرقم التعريفي التجريبي")
+
+st.divider()
+
+st.header("💊 جدول الأدوية اليومي")
+
+medicine = st.text_input("اسم الدواء")
+dose = st.text_input("الجرعة حسب الوصفة")
+medicine_time = st.time_input("موعد الدواء")
+
+if "medications" not in st.session_state:
+    st.session_state.medications = []
+
+if st.button("إضافة الدواء"):
+    if medicine.strip() and dose.strip():
+        st.session_state.medications.append({
+            "medicine": medicine,
+            "dose": dose,
+            "time": medicine_time.strftime("%H:%M"),
+            "taken": False,
+            "confirmed_at": None
+        })
+        st.success("تمت إضافة الدواء إلى الجدول.")
+    else:
+        st.warning("أدخلي اسم الدواء والجرعة أولًا.")
+
+if st.session_state.medications:
+    st.subheader("أدوية اليوم")
+
+    for i, item in enumerate(st.session_state.medications):
+        st.markdown(f"### {item['medicine']}")
+        st.write("الجرعة:", item["dose"])
+        st.write("الموعد:", item["time"])
+
+        if not item["taken"]:
+            if st.button("تأكيد تناول الجرعة", key=f"taken_{i}"):
+                item["taken"] = True
+                item["confirmed_at"] = datetime.now().strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+                st.rerun()
+        else:
+            st.success("تم تأكيد تناول الجرعة")
+            st.write("وقت التأكيد:", item["confirmed_at"])
+
+        st.divider()
+
+st.header("📝 تسجيل الأعراض اليومية")
+
+pain = st.slider("شدة الألم", min_value=0, max_value=10, value=0)
+nausea = st.selectbox(
+    "هل يوجد غثيان؟",
+    ["لا", "خفيف", "متوسط", "شديد"]
+)
+notes = st.text_area("أعراض أخرى أو ملاحظات")
+
+if st.button("حفظ الأعراض"):
+    if "symptoms" not in st.session_state:
+        st.session_state.symptoms = []
+
+    st.session_state.symptoms.append({
+        "date": date.today().isoformat(),
+        "time": datetime.now().strftime("%H:%M:%S"),
+        "pain": pain,
+        "nausea": nausea,
+        "notes": notes
+    })
+    st.success("تم تسجيل الأعراض في النموذج.")
+
+if "symptoms" in st.session_state and st.session_state.symptoms:
+    st.subheader("سجل الأعراض")
+    st.dataframe(st.session_state.symptoms, use_container_width=True)
+
+st.caption("نسخة أولية: البيانات محفوظة مؤقتًا أثناء جلسة التطبيق.")
